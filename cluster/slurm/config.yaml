@@ -1,0 +1,87 @@
+# Snakemake SLURM Executor Profile - HOTAIR m6A Analysis
+# ======================================================
+# Usage: pixi run snakemake -s ../Snakefile --configfile=../config/config-hotair.yml --profile=../cluster/slurm
+# Note: Snakemake 9 requires runtime values as strings (e.g., "4h", "30m"),
+# bare integers are interpreted as seconds, not minutes.
+
+# Executor settings
+executor: slurm
+jobs: 20
+latency-wait: 60
+
+# Pass pixi environment to SLURM jobs
+envvars:
+  - PATH
+  - LD_LIBRARY_PATH
+  - CONDA_PREFIX
+
+# SLURM log settings
+slurm-logdir: "logs/slurm"
+slurm-keep-successful-logs: false
+slurm-delete-logfiles-older-than: 10
+
+# Default resources for all rules
+default-resources:
+  slurm_partition: "rna"
+  slurm_account: "rbi"
+  runtime: "2h"
+  mem_mb: 8000                   # 8GB
+  cpus_per_task: 1
+
+# Rule-specific resource overrides
+set-resources:
+  # WarpDemuX demultiplexing - CPU intensive
+  warpdemux:
+    runtime: "4h"
+    mem_mb: 32000                # 32GB
+    cpus_per_task: 16
+
+  parse_warpdemux:
+    runtime: "1h"
+    mem_mb: 8000
+    cpus_per_task: 1
+
+  # POD5 splitting per sample
+  split_pod5:
+    runtime: "2h"
+    mem_mb: 16000                # 16GB
+    cpus_per_task: 4
+
+  # Dorado basecalling - requires GPU
+  rebasecall:
+    slurm_partition: "gpu"
+    slurm_account: "gpu_rbi"
+    gres: "gpu:1"
+    runtime: "16h"
+    mem_mb: 48000                # 48GB
+    cpus_per_task: 4
+
+  # minimap2 alignment
+  minimap2_align:
+    runtime: "4h"
+    mem_mb: 32000                # 32GB
+    cpus_per_task: 16
+
+  # Tag injection from dorado uBAM
+  inject_ubam_tags:
+    runtime: "6h"
+    mem_mb: 48000                # 48GB
+    cpus_per_task: 4
+
+  # Modkit pileup
+  modkit_pileup:
+    runtime: "4h"
+    mem_mb: 32000                # 32GB
+    cpus_per_task: 4
+
+  # Modkit per-read extraction
+  modkit_extract_calls:
+    runtime: "6h"
+    mem_mb: 48000                # 48GB
+    cpus_per_task: 4
+
+# Workflow settings
+rerun-incomplete: true
+keep-going: true
+printshellcmds: true
+show-failed-logs: true

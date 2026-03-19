@@ -1,0 +1,3 @@
+[submodule "aa-tRNA-seq-pipeline"]
+	path = aa-tRNA-seq-pipeline
+	url = https://github.com/rnabioco/aa-tRNA-seq-pipeline.git

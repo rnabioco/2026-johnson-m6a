@@ -1,0 +1,49 @@
+# Config for HOTAIR nanopore m6A analysis
+#
+# Uses WarpDemuX for demultiplexing, dorado for basecalling with modification
+# calling (all mods, pipeline defaults), and minimap2 for alignment to GENCODE.
+#
+# Source data: /beevol/home/gonzalsa/data/HotairWTA783UAL
+# Copy destination: /beevol/home/linarese/Vault
+# m6A output: /beevol/home/linarese/HOTAIR_Nanopore_Data_3.12.2026
+
+# Sample file with WarpDemuX barcode assignments
+samples: config/samples-hotair.yml
+
+# Output directory
+output_directory: "results/hotair"
+
+# Basecalling model (RNA004 super-accuracy)
+base_calling_model: "resources/models/rna004_130bps_sup@v5.3.0"
+
+# Dorado version (must match model)
+dorado_version: 1.4.0
+dorado_model: rna004_130bps_sup@v5.3.0
+
+# GENCODE v49 transcriptome reference for minimap2 alignment
+# Source: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/gencode.v49.transcripts.fa.gz
+fasta: "resources/ref/gencode.v49.transcripts.fa"
+
+# minimap2 options for nanopore direct RNA alignment
+opts:
+  # all mods (pipeline defaults): m5C_2OmeC, inosine_m6A_2OmeA, pseU_2OmeU, 2OmeG
+  dorado: " --modified-bases m5C_2OmeC inosine_m6A_2OmeA pseU_2OmeU 2OmeG "
+  # minimap2: nanopore reads aligned to transcripts (not genome)
+  minimap2: " -ax map-ont "
+
+# WarpDemuX demultiplexing
+# Using WDX6_rna004_v1_0 (6-plex) to cover barcodes 4, 5, 6, 7
+warpdemux:
+  enabled: true
+  barcode_kit: "WDX6_rna004_v1_0"
+  save_boundaries: true
+  threads: 8
+
+# Modkit threshold parameters for modification calling (pipeline defaults)
+modkit:
+  filter_threshold: 0.5
+  mod_thresholds:
+    a: 0.99
+    m: 0.99
+    "17802": 0.995
+    "17596": 0.99

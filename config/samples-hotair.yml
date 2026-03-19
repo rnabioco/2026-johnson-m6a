@@ -1,0 +1,23 @@
+# HOTAIR nanopore data - WarpDemuX demultiplexing
+#
+# Run: 20260302_1605_P2S-00519-B_PAY37851_34ea97ea
+# Kit: SQK-RNA004
+# Flow cell: FLO-PRO004RA
+#
+# Barcodes:
+#   4 (WT):    GGAGGCCAGGCGGACCGA
+#   5 (A783U): ACGGACCTTTTGACTTAA
+#   6:         TATTGCATACTGCGCCGC
+#   7 (AL):    CCACGGAGGGAGGATTGG
+#
+# Using WDX6_rna004_v1_0 (6-plex RNA004) because it covers barcodes 4-7.
+# Barcodes 11 and 12 are in the model but unused in this experiment.
+
+runs:
+  - path: /beevol/home/gonzalsa/data/HotairWTA783UAL/20260302_1605_P2S-00519-B_PAY37851_34ea97ea
+    barcode_kit: "WDX6_rna004_v1_0"
+    samples:
+      HOTAIR_WT: "barcode04"
+      HOTAIR_A783U: "barcode05"
+      HOTAIR_bc06: "barcode06"
+      HOTAIR_AL: "barcode07"
