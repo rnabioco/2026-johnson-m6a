@@ -1,0 +1,128 @@
+[
+  {
+    "objectID": "top-transcripts.html",
+    "href": "top-transcripts.html",
+    "title": "Top Modified Transcripts",
+    "section": "",
+    "text": "Code\nlibrary(readr)\nlibrary(dplyr)\nlibrary(DT)\nlibrary(ggplot2)\n\ndata_dir &lt;- \"../results/hotair/summary/website\"\ntop &lt;- read_tsv(file.path(data_dir, \"top_transcripts.tsv\"), show_col_types = FALSE)\nmod_summary &lt;- read_tsv(file.path(data_dir, \"mod_summary_by_transcript.tsv\"),\n                        show_col_types = FALSE)"
+  },
+  {
+    "objectID": "top-transcripts.html#top-20-transcripts-by-coverage",
+    "href": "top-transcripts.html#top-20-transcripts-by-coverage",
+    "title": "Top Modified Transcripts",
+    "section": "Top 20 Transcripts by Coverage",
+    "text": "Top 20 Transcripts by Coverage\n\n\nCode\ntop |&gt;\n  select(gene_name, transcript_name, transcript_length,\n         mean_max_coverage, max_coverage, n_samples) |&gt;\n  arrange(desc(mean_max_coverage)) |&gt;\n  datatable(\n    colnames = c(\"Gene\", \"Transcript\", \"Length (nt)\",\n                 \"Mean Max Coverage\", \"Max Coverage\", \"Samples\"),\n    options = list(pageLength = 20),\n    rownames = FALSE\n  ) |&gt;\n  formatRound(c(\"mean_max_coverage\", \"max_coverage\"), digits = 0)"
+  },
+  {
+    "objectID": "top-transcripts.html#modification-summary",
+    "href": "top-transcripts.html#modification-summary",
+    "title": "Top Modified Transcripts",
+    "section": "Modification Summary",
+    "text": "Modification Summary\n\n\nCode\nmod_summary |&gt;\n  filter(mean_pct_modified &gt; 0) |&gt;\n  ggplot(aes(x = sample, y = paste(gene_name, transcript_name, sep = \" \"),\n             fill = mean_pct_modified)) +\n  geom_tile() +\n  facet_wrap(~mod_label, scales = \"free\") +\n  scale_fill_viridis_c(name = \"Mean Mod %\") +\n  labs(x = NULL, y = NULL,\n       title = \"Mean Modification Frequency by Transcript and Sample\") +\n  theme_minimal(base_size = 11) +\n  theme(axis.text.x = element_text(angle = 45, hjust = 1),\n        strip.text = element_text(face = \"bold\"))"
+  },
+  {
+    "objectID": "top-transcripts.html#per-transcript-modification-detail",
+    "href": "top-transcripts.html#per-transcript-modification-detail",
+    "title": "Top Modified Transcripts",
+    "section": "Per-Transcript Modification Detail",
+    "text": "Per-Transcript Modification Detail\n\n\nCode\nmod_summary |&gt;\n  select(gene_name, transcript_name, mod_label, sample,\n         mean_pct_modified, positions_with_mod, total_positions, mean_coverage) |&gt;\n  mutate(across(where(is.numeric), \\(x) round(x, 2))) |&gt;\n  datatable(\n    colnames = c(\"Gene\", \"Transcript\", \"Modification\", \"Sample\",\n                 \"Mean Mod %\", \"Positions Modified\", \"Total Positions\",\n                 \"Mean Coverage\"),\n    filter = \"top\",\n    options = list(pageLength = 15, scrollX = TRUE),\n    rownames = FALSE\n  )"
+  },
+  {
+    "objectID": "alignment.html",
+    "href": "alignment.html",
+    "title": "Alignment Statistics",
+    "section": "",
+    "text": "Code\nlibrary(readr)\nlibrary(dplyr)\nlibrary(ggplot2)\nlibrary(gt)\nlibrary(tidyr)\n\ndata_dir &lt;- \"../results/hotair/summary/website\"\naln &lt;- read_tsv(file.path(data_dir, \"alignment_stats.tsv\"), show_col_types = FALSE)"
+  },
+  {
+    "objectID": "alignment.html#reads-per-sample",
+    "href": "alignment.html#reads-per-sample",
+    "title": "Alignment Statistics",
+    "section": "Reads per Sample",
+    "text": "Reads per Sample\n\n\nCode\naln |&gt;\n  select(sample, Total = total_reads, Mapped = mapped_reads) |&gt;\n  pivot_longer(-sample, names_to = \"type\", values_to = \"reads\") |&gt;\n  ggplot(aes(x = sample, y = reads, fill = type)) +\n  geom_col(position = \"dodge\") +\n  scale_y_continuous(labels = scales::comma) +\n  labs(x = NULL, y = \"Reads\", fill = NULL, title = \"Total vs Mapped Reads\") +\n  theme_minimal(base_size = 14) +\n  theme(axis.text.x = element_text(angle = 45, hjust = 1))"
+  },
+  {
+    "objectID": "alignment.html#mapping-rate",
+    "href": "alignment.html#mapping-rate",
+    "title": "Alignment Statistics",
+    "section": "Mapping Rate",
+    "text": "Mapping Rate\n\n\nCode\naln |&gt;\n  ggplot(aes(x = reorder(sample, -mapping_rate), y = mapping_rate, fill = sample)) +\n  geom_col(show.legend = FALSE) +\n  geom_text(aes(label = paste0(round(mapping_rate, 1), \"%\")), vjust = -0.5) +\n  ylim(0, 100) +\n  labs(x = NULL, y = \"Mapping Rate (%)\", title = \"Mapping Rate by Sample\") +\n  theme_minimal(base_size = 14) +\n  theme(axis.text.x = element_text(angle = 45, hjust = 1))"
+  },
+  {
+    "objectID": "alignment.html#detailed-statistics",
+    "href": "alignment.html#detailed-statistics",
+    "title": "Alignment Statistics",
+    "section": "Detailed Statistics",
+    "text": "Detailed Statistics\n\n\nCode\naln |&gt;\n  gt() |&gt;\n  fmt_number(c(total_reads, mapped_reads, primary_mapped), decimals = 0) |&gt;\n  fmt_number(mapping_rate, decimals = 1, pattern = \"{x}%\") |&gt;\n  cols_label(\n    sample = \"Sample\",\n    total_reads = \"Total Reads\",\n    mapped_reads = \"Mapped Reads\",\n    mapping_rate = \"Mapping Rate\",\n    primary_mapped = \"Primary Mapped\"\n  ) |&gt;\n  tab_header(title = \"Alignment Statistics\")\n\n\n\n\n\n\n\n\nAlignment Statistics\n\n\nSample\nTotal Reads\nMapped Reads\nMapping Rate\nPrimary Mapped\n\n\n\n\nHOTAIR_WT\n167,480\n139,101\n83.1%\n139,101\n\n\nHOTAIR_A783U\n179,822\n144,559\n80.4%\n144,559\n\n\nHOTAIR_bc06\n144\n72\n50.0%\n72\n\n\nHOTAIR_AL\n144,275\n117,174\n81.2%\n117,174"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Pipeline Overview",
+    "section": "",
+    "text": "flowchart TD\n    A[\"Raw POD5 Reads\n    (Nanopore RNA004)\"] --&gt; B[\"WarpDemuX\n    Demultiplexing\n    (6-plex, WDX6_rna004_v1_0)\"]\n\n    B --&gt; C[\"Per-sample POD5\"]\n    C --&gt; D[\"Dorado Basecalling\n    (rna004_130bps_sup@v5.3.0)\n    + Modification Detection\"]\n\n    D --&gt; E[\"Unaligned BAM\n    (with MM/ML tags)\"]\n    E --&gt; F[\"FASTQ Extraction\"]\n    F --&gt; G[\"minimap2 Alignment\n    (GENCODE v49 Transcriptome)\"]\n\n    G --&gt; H[\"Aligned BAM\"]\n    E --&gt; I[\"Transfer MM/ML Tags\n    (inject_ubam_tags)\"]\n    H --&gt; I\n    I --&gt; J[\"Final BAM\n    (aligned + modifications)\"]\n\n    J --&gt; K[\"modkit pileup\n    Per-position Modification\n    Frequencies\"]\n    J --&gt; L[\"modkit extract\n    Per-read Modification\n    Calls\"]\n\n    style A fill:#e1f5fe\n    style J fill:#e8f5e9\n    style K fill:#fff3e0\n    style L fill:#fff3e0\n\n\n\n\n\n\nModifications detected: m6A, m5C, inosine, pseudouridine, 2’-O-methylation (Am, Cm, Um, Gm)"
+  },
+  {
+    "objectID": "index.html#workflow",
+    "href": "index.html#workflow",
+    "title": "Pipeline Overview",
+    "section": "",
+    "text": "flowchart TD\n    A[\"Raw POD5 Reads\n    (Nanopore RNA004)\"] --&gt; B[\"WarpDemuX\n    Demultiplexing\n    (6-plex, WDX6_rna004_v1_0)\"]\n\n    B --&gt; C[\"Per-sample POD5\"]\n    C --&gt; D[\"Dorado Basecalling\n    (rna004_130bps_sup@v5.3.0)\n    + Modification Detection\"]\n\n    D --&gt; E[\"Unaligned BAM\n    (with MM/ML tags)\"]\n    E --&gt; F[\"FASTQ Extraction\"]\n    F --&gt; G[\"minimap2 Alignment\n    (GENCODE v49 Transcriptome)\"]\n\n    G --&gt; H[\"Aligned BAM\"]\n    E --&gt; I[\"Transfer MM/ML Tags\n    (inject_ubam_tags)\"]\n    H --&gt; I\n    I --&gt; J[\"Final BAM\n    (aligned + modifications)\"]\n\n    J --&gt; K[\"modkit pileup\n    Per-position Modification\n    Frequencies\"]\n    J --&gt; L[\"modkit extract\n    Per-read Modification\n    Calls\"]\n\n    style A fill:#e1f5fe\n    style J fill:#e8f5e9\n    style K fill:#fff3e0\n    style L fill:#fff3e0\n\n\n\n\n\n\nModifications detected: m6A, m5C, inosine, pseudouridine, 2’-O-methylation (Am, Cm, Um, Gm)"
+  },
+  {
+    "objectID": "index.html#samples",
+    "href": "index.html#samples",
+    "title": "Pipeline Overview",
+    "section": "Samples",
+    "text": "Samples\n\n\nCode\nlibrary(readr)\nlibrary(gt)\nlibrary(dplyr)\n\ndata_dir &lt;- \"../results/hotair/summary/website\"\ndemux &lt;- read_tsv(file.path(data_dir, \"demux_summary.tsv\"), show_col_types = FALSE)\n\nsample_info &lt;- tribble(\n  ~sample,        ~description,\n  \"HOTAIR_WT\",    \"Wild-type HOTAIR\",\n  \"HOTAIR_A783U\", \"A783U point mutant\",\n  \"HOTAIR_bc06\",  \"Barcode 06 (low reads)\",\n  \"HOTAIR_AL\",    \"AL variant\",\n)\n\ndemux |&gt;\n  filter(!is.na(sample)) |&gt;\n  left_join(sample_info, by = \"sample\") |&gt;\n  select(Sample = sample, Barcode = predicted_barcode,\n         Description = description, `Read Count` = n_reads) |&gt;\n  gt() |&gt;\n  fmt_number(`Read Count`, decimals = 0) |&gt;\n  tab_header(title = \"Sample Summary\")\n\n\n\n\n\n\n\n\nSample Summary\n\n\nSample\nBarcode\nDescription\nRead Count\n\n\n\n\nHOTAIR_A783U\nbarcode05\nA783U point mutant\n178,765\n\n\nHOTAIR_WT\nbarcode04\nWild-type HOTAIR\n166,416\n\n\nHOTAIR_AL\nbarcode07\nAL variant\n143,411\n\n\nHOTAIR_bc06\nbarcode06\nBarcode 06 (low reads)\n141"
+  },
+  {
+    "objectID": "index.html#demultiplexing",
+    "href": "index.html#demultiplexing",
+    "title": "Pipeline Overview",
+    "section": "Demultiplexing",
+    "text": "Demultiplexing\n\n\nCode\nlibrary(ggplot2)\n\ndemux |&gt;\n  filter(!is.na(sample)) |&gt;\n  mutate(sample = reorder(sample, -n_reads)) |&gt;\n  ggplot(aes(x = sample, y = n_reads, fill = sample)) +\n  geom_col(show.legend = FALSE) +\n  scale_y_continuous(labels = scales::comma) +\n  labs(x = NULL, y = \"Read Count\", title = \"Reads per Sample\") +\n  theme_minimal(base_size = 14) +\n  theme(axis.text.x = element_text(angle = 45, hjust = 1))"
+  },
+  {
+    "objectID": "hotair.html",
+    "href": "hotair.html",
+    "title": "HOTAIR Analysis",
+    "section": "",
+    "text": "Code\nlibrary(readr)\nlibrary(dplyr)\nlibrary(ggplot2)\nlibrary(plotly)\nlibrary(gt)\nlibrary(data.table)\n\ndata_dir &lt;- \"../results/hotair/summary/website\"\nhotair &lt;- fread(file.path(data_dir, \"hotair_pileup.tsv.gz\"), sep = \"\\t\")\n\n# Focus on the main transcript (HOTAIR-201, canonical full-length 2415 nt)\nmain_tx &lt;- hotair[transcript_name == \"HOTAIR-201\"]"
+  },
+  {
+    "objectID": "hotair.html#coverage-along-hotair-201",
+    "href": "hotair.html#coverage-along-hotair-201",
+    "title": "HOTAIR Analysis",
+    "section": "Coverage along HOTAIR-201",
+    "text": "Coverage along HOTAIR-201\n\n\nCode\n# Use m6A rows as representative for coverage (same at each position)\ncov &lt;- main_tx[mod_code == \"a\", .(position = start, coverage = n_valid_cov, sample)]\n\np &lt;- ggplot(cov, aes(x = position, y = coverage, color = sample)) +\n  geom_line(alpha = 0.8) +\n  labs(x = \"Position (nt)\", y = \"Read Coverage\", color = \"Sample\",\n       title = \"Read Coverage along HOTAIR-201 (2,415 nt)\") +\n  theme_minimal(base_size = 14)\n\nggplotly(p)"
+  },
+  {
+    "objectID": "hotair.html#m6a-modification-frequency",
+    "href": "hotair.html#m6a-modification-frequency",
+    "title": "HOTAIR Analysis",
+    "section": "m6A Modification Frequency",
+    "text": "m6A Modification Frequency\n\n\nCode\nm6a &lt;- main_tx[mod_code == \"a\" & n_valid_cov &gt;= 5]\n\nif (nrow(m6a) &gt; 0) {\n  p &lt;- ggplot(m6a, aes(x = start, y = pct_modified, color = sample)) +\n    geom_point(alpha = 0.5, size = 0.8) +\n    geom_smooth(se = FALSE, span = 0.1) +\n    labs(x = \"Position (nt)\", y = \"m6A Frequency (%)\", color = \"Sample\",\n         title = \"m6A Modification along HOTAIR-201\") +\n    theme_minimal(base_size = 14)\n\n  ggplotly(p)\n} else {\n  cat(\"No m6A data with &gt;= 5 reads coverage.\\n\")\n}\n\n\n`geom_smooth()` using method = 'loess' and formula = 'y ~ x'"
+  },
+  {
+    "objectID": "hotair.html#position-783-a783u-mutation-site",
+    "href": "hotair.html#position-783-a783u-mutation-site",
+    "title": "HOTAIR Analysis",
+    "section": "Position 783 (A783U Mutation Site)",
+    "text": "Position 783 (A783U Mutation Site)\nPosition 783 is the site of the A-to-U mutation in the HOTAIR_A783U sample. This position is relevant because it represents a known m6A site in HOTAIR.\n\n\nCode\npos783 &lt;- main_tx[start &gt;= 770 & start &lt;= 800 & mod_code == \"a\"]\n\nif (nrow(pos783) &gt; 0) {\n  p &lt;- ggplot(pos783, aes(x = start, y = pct_modified, fill = sample)) +\n    geom_col(position = \"dodge\") +\n    geom_vline(xintercept = 783, linetype = \"dashed\", color = \"red\") +\n    annotate(\"text\", x = 783.5, y = Inf, label = \"A783\",\n             color = \"red\", vjust = 1.5, hjust = 0) +\n    labs(x = \"Position (nt)\", y = \"m6A Frequency (%)\", fill = \"Sample\",\n         title = \"m6A around Position 783 in HOTAIR-201\") +\n    theme_minimal(base_size = 14)\n\n  ggplotly(p)\n} else {\n  cat(\"No data with sufficient coverage at position 783 region.\\n\")\n}"
+  },
+  {
+    "objectID": "hotair.html#all-modification-types",
+    "href": "hotair.html#all-modification-types",
+    "title": "HOTAIR Analysis",
+    "section": "All Modification Types",
+    "text": "All Modification Types\n\n\nCode\nall_mods &lt;- main_tx[n_valid_cov &gt;= 5 & pct_modified &gt; 0]\n\nif (nrow(all_mods) &gt; 0) {\n  p &lt;- ggplot(all_mods, aes(x = start, y = pct_modified, color = sample)) +\n    geom_point(alpha = 0.5, size = 0.8) +\n    facet_wrap(~mod_label, scales = \"free_y\", ncol = 1) +\n    labs(x = \"Position (nt)\", y = \"Modification Frequency (%)\",\n         color = \"Sample\",\n         title = \"All Modifications along HOTAIR-201\") +\n    theme_minimal(base_size = 12) +\n    theme(strip.text = element_text(face = \"bold\"))\n\n  p\n} else {\n  cat(\"No positions with detected modifications above threshold.\\n\")\n}"
+  },
+  {
+    "objectID": "hotair.html#hotair-isoforms",
+    "href": "hotair.html#hotair-isoforms",
+    "title": "HOTAIR Analysis",
+    "section": "HOTAIR Isoforms",
+    "text": "HOTAIR Isoforms\n\n\nCode\nisoform_cov &lt;- hotair[mod_code == \"a\", .(\n  max_coverage  = max(n_valid_cov),\n  mean_coverage = round(mean(n_valid_cov), 1),\n  positions     = .N\n), by = .(transcript_name, transcript_length, sample)]\n\nisoform_cov |&gt;\n  as.data.frame() |&gt;\n  arrange(desc(max_coverage)) |&gt;\n  gt() |&gt;\n  fmt_number(max_coverage, decimals = 0) |&gt;\n  cols_label(\n    transcript_name = \"Isoform\",\n    transcript_length = \"Length (nt)\",\n    sample = \"Sample\",\n    max_coverage = \"Max Coverage\",\n    mean_coverage = \"Mean Coverage\",\n    positions = \"Positions\"\n  ) |&gt;\n  tab_header(title = \"HOTAIR Isoform Coverage Summary\")\n\n\n\n\n\n\n\n\nHOTAIR Isoform Coverage Summary\n\n\nIsoform\nLength (nt)\nSample\nMax Coverage\nMean Coverage\nPositions\n\n\n\n\nHOTAIR-201\n2415\nHOTAIR_WT\n58\n12.3\n658\n\n\nHOTAIR-210\n1097\nHOTAIR_WT\n47\n4.2\n136\n\n\nHOTAIR-212\n2105\nHOTAIR_WT\n44\n2.7\n329\n\n\nHOTAIR-208\n1519\nHOTAIR_WT\n43\n7.7\n59\n\n\nHOTAIR-203\n560\nHOTAIR_WT\n41\n34.7\n11\n\n\nHOTAIR-213\n1451\nHOTAIR_WT\n35\n29.8\n11\n\n\nHOTAIR-205\n927\nHOTAIR_WT\n35\n25.2\n13\n\n\nHOTAIR-206\n747\nHOTAIR_WT\n35\n25.4\n13\n\n\nHOTAIR-201\n2415\nHOTAIR_A783U\n17\n13.0\n636\n\n\nHOTAIR-212\n2105\nHOTAIR_A783U\n2\n1.2\n397\n\n\nHOTAIR-211\n1456\nHOTAIR_A783U\n1\n1.0\n148\n\n\nHOTAIR-213\n1451\nHOTAIR_A783U\n1\n1.0\n9\n\n\nHOTAIR-212\n2105\nHOTAIR_AL\n1\n1.0\n28"
+  }
+]
