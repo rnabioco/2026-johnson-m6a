@@ -349,8 +349,8 @@ rule rebasecall:
 
         dorado basecaller \
             --models-directory {params.models_dir} \
-            {params.dorado_opts} \
-            {params.model} {input.pod5} > {output} 2> {log}
+            {params.model} {input.pod5} \
+            {params.dorado_opts} > {output} 2> {log}
         """
 
 
