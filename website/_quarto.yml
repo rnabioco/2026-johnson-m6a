@@ -1,0 +1,20 @@
+project:
+  type: website
+  output-dir: ../results/hotair/summary/website/_site
+
+website:
+  title: "HOTAIR m6A Nanopore Analysis"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Overview
+      - alignment.qmd
+      - hotair.qmd
+      - top-transcripts.qmd
+
+format:
+  html:
+    theme: cosmo
+    code-fold: true
+    toc: true
+    embed-resources: true

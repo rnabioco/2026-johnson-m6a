@@ -1,0 +1,71 @@
+---
+title: "Top Modified Transcripts"
+---
+
+```{r}
+#| label: setup
+#| message: false
+library(readr)
+library(dplyr)
+library(DT)
+library(ggplot2)
+
+data_dir <- "../results/hotair/summary/website"
+top <- read_tsv(file.path(data_dir, "top_transcripts.tsv"), show_col_types = FALSE)
+mod_summary <- read_tsv(file.path(data_dir, "mod_summary_by_transcript.tsv"),
+                        show_col_types = FALSE)
+```
+
+## Top 20 Transcripts by Coverage
+
+```{r}
+#| label: top-table
+top |>
+  select(gene_name, transcript_name, transcript_length,
+         mean_max_coverage, max_coverage, n_samples) |>
+  arrange(desc(mean_max_coverage)) |>
+  datatable(
+    colnames = c("Gene", "Transcript", "Length (nt)",
+                 "Mean Max Coverage", "Max Coverage", "Samples"),
+    options = list(pageLength = 20),
+    rownames = FALSE
+  ) |>
+  formatRound(c("mean_max_coverage", "max_coverage"), digits = 0)
+```
+
+## Modification Summary
+
+```{r}
+#| label: mod-heatmap
+#| fig-height: 10
+mod_summary |>
+  filter(mean_pct_modified > 0) |>
+  ggplot(aes(x = sample, y = paste(gene_name, transcript_name, sep = " "),
+             fill = mean_pct_modified)) +
+  geom_tile() +
+  facet_wrap(~mod_label, scales = "free") +
+  scale_fill_viridis_c(name = "Mean Mod %") +
+  labs(x = NULL, y = NULL,
+       title = "Mean Modification Frequency by Transcript and Sample") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        strip.text = element_text(face = "bold"))
+```
+
+## Per-Transcript Modification Detail
+
+```{r}
+#| label: mod-detail-table
+mod_summary |>
+  select(gene_name, transcript_name, mod_label, sample,
+         mean_pct_modified, positions_with_mod, total_positions, mean_coverage) |>
+  mutate(across(where(is.numeric), \(x) round(x, 2))) |>
+  datatable(
+    colnames = c("Gene", "Transcript", "Modification", "Sample",
+                 "Mean Mod %", "Positions Modified", "Total Positions",
+                 "Mean Coverage"),
+    filter = "top",
+    options = list(pageLength = 15, scrollX = TRUE),
+    rownames = FALSE
+  )
+```

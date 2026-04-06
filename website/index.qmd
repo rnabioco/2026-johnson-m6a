@@ -1,0 +1,93 @@
+---
+title: "Pipeline Overview"
+---
+
+## Workflow
+
+```{mermaid}
+flowchart TD
+    A["Raw POD5 Reads
+    (Nanopore RNA004)"] --> B["WarpDemuX
+    Demultiplexing
+    (6-plex, WDX6_rna004_v1_0)"]
+
+    B --> C["Per-sample POD5"]
+    C --> D["Dorado Basecalling
+    (rna004_130bps_sup@v5.3.0)
+    + Modification Detection"]
+
+    D --> E["Unaligned BAM
+    (with MM/ML tags)"]
+    E --> F["FASTQ Extraction"]
+    F --> G["minimap2 Alignment
+    (GENCODE v49 Transcriptome)"]
+
+    G --> H["Aligned BAM"]
+    E --> I["Transfer MM/ML Tags
+    (inject_ubam_tags)"]
+    H --> I
+    I --> J["Final BAM
+    (aligned + modifications)"]
+
+    J --> K["modkit pileup
+    Per-position Modification
+    Frequencies"]
+    J --> L["modkit extract
+    Per-read Modification
+    Calls"]
+
+    style A fill:#e1f5fe
+    style J fill:#e8f5e9
+    style K fill:#fff3e0
+    style L fill:#fff3e0
+```
+
+**Modifications detected:** m6A, m5C, inosine, pseudouridine, 2'-O-methylation (Am, Cm, Um, Gm)
+
+## Samples
+
+```{r}
+#| label: sample-table
+#| message: false
+library(readr)
+library(gt)
+library(dplyr)
+
+data_dir <- "../results/hotair/summary/website"
+demux <- read_tsv(file.path(data_dir, "demux_summary.tsv"), show_col_types = FALSE)
+
+sample_info <- tribble(
+  ~sample,        ~description,
+  "HOTAIR_WT",    "Wild-type HOTAIR",
+  "HOTAIR_A783U", "A783U point mutant",
+  "HOTAIR_bc06",  "Barcode 06 (low reads)",
+  "HOTAIR_AL",    "AL variant",
+)
+
+demux |>
+  filter(!is.na(sample)) |>
+  left_join(sample_info, by = "sample") |>
+  select(Sample = sample, Barcode = predicted_barcode,
+         Description = description, `Read Count` = n_reads) |>
+  gt() |>
+  fmt_number(`Read Count`, decimals = 0) |>
+  tab_header(title = "Sample Summary")
+```
+
+## Demultiplexing
+
+```{r}
+#| label: demux-barplot
+#| message: false
+library(ggplot2)
+
+demux |>
+  filter(!is.na(sample)) |>
+  mutate(sample = reorder(sample, -n_reads)) |>
+  ggplot(aes(x = sample, y = n_reads, fill = sample)) +
+  geom_col(show.legend = FALSE) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = NULL, y = "Read Count", title = "Reads per Sample") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```

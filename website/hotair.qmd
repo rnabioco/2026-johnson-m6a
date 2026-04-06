@@ -1,0 +1,130 @@
+---
+title: "HOTAIR Analysis"
+---
+
+```{r}
+#| label: setup
+#| message: false
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(gt)
+library(data.table)
+
+data_dir <- "../results/hotair/summary/website"
+hotair <- fread(file.path(data_dir, "hotair_pileup.tsv.gz"), sep = "\t")
+
+# Focus on the main transcript (HOTAIR-201, canonical full-length 2415 nt)
+main_tx <- hotair[transcript_name == "HOTAIR-201"]
+```
+
+## Coverage along HOTAIR-201
+
+```{r}
+#| label: coverage
+# Use m6A rows as representative for coverage (same at each position)
+cov <- main_tx[mod_code == "a", .(position = start, coverage = n_valid_cov, sample)]
+
+p <- ggplot(cov, aes(x = position, y = coverage, color = sample)) +
+  geom_line(alpha = 0.8) +
+  labs(x = "Position (nt)", y = "Read Coverage", color = "Sample",
+       title = "Read Coverage along HOTAIR-201 (2,415 nt)") +
+  theme_minimal(base_size = 14)
+
+ggplotly(p)
+```
+
+## m6A Modification Frequency
+
+```{r}
+#| label: m6a-profile
+m6a <- main_tx[mod_code == "a" & n_valid_cov >= 5]
+
+if (nrow(m6a) > 0) {
+  p <- ggplot(m6a, aes(x = start, y = pct_modified, color = sample)) +
+    geom_point(alpha = 0.5, size = 0.8) +
+    geom_smooth(se = FALSE, span = 0.1) +
+    labs(x = "Position (nt)", y = "m6A Frequency (%)", color = "Sample",
+         title = "m6A Modification along HOTAIR-201") +
+    theme_minimal(base_size = 14)
+
+  ggplotly(p)
+} else {
+  cat("No m6A data with >= 5 reads coverage.\n")
+}
+```
+
+## Position 783 (A783U Mutation Site)
+
+Position 783 is the site of the A-to-U mutation in the HOTAIR_A783U sample.
+This position is relevant because it represents a known m6A site in HOTAIR.
+
+```{r}
+#| label: pos-783
+pos783 <- main_tx[start >= 770 & start <= 800 & mod_code == "a"]
+
+if (nrow(pos783) > 0) {
+  p <- ggplot(pos783, aes(x = start, y = pct_modified, fill = sample)) +
+    geom_col(position = "dodge") +
+    geom_vline(xintercept = 783, linetype = "dashed", color = "red") +
+    annotate("text", x = 783.5, y = Inf, label = "A783",
+             color = "red", vjust = 1.5, hjust = 0) +
+    labs(x = "Position (nt)", y = "m6A Frequency (%)", fill = "Sample",
+         title = "m6A around Position 783 in HOTAIR-201") +
+    theme_minimal(base_size = 14)
+
+  ggplotly(p)
+} else {
+  cat("No data with sufficient coverage at position 783 region.\n")
+}
+```
+
+## All Modification Types
+
+```{r}
+#| label: all-mods
+#| fig-height: 10
+all_mods <- main_tx[n_valid_cov >= 5 & pct_modified > 0]
+
+if (nrow(all_mods) > 0) {
+  p <- ggplot(all_mods, aes(x = start, y = pct_modified, color = sample)) +
+    geom_point(alpha = 0.5, size = 0.8) +
+    facet_wrap(~mod_label, scales = "free_y", ncol = 1) +
+    labs(x = "Position (nt)", y = "Modification Frequency (%)",
+         color = "Sample",
+         title = "All Modifications along HOTAIR-201") +
+    theme_minimal(base_size = 12) +
+    theme(strip.text = element_text(face = "bold"))
+
+  p
+} else {
+  cat("No positions with detected modifications above threshold.\n")
+}
+```
+
+## HOTAIR Isoforms
+
+```{r}
+#| label: isoforms
+isoform_cov <- hotair[mod_code == "a", .(
+  max_coverage  = max(n_valid_cov),
+  mean_coverage = round(mean(n_valid_cov), 1),
+  positions     = .N
+), by = .(transcript_name, transcript_length, sample)]
+
+isoform_cov |>
+  as.data.frame() |>
+  arrange(desc(max_coverage)) |>
+  gt() |>
+  fmt_number(max_coverage, decimals = 0) |>
+  cols_label(
+    transcript_name = "Isoform",
+    transcript_length = "Length (nt)",
+    sample = "Sample",
+    max_coverage = "Max Coverage",
+    mean_coverage = "Mean Coverage",
+    positions = "Positions"
+  ) |>
+  tab_header(title = "HOTAIR Isoform Coverage Summary")
+```

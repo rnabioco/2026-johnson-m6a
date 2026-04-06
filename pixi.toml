@@ -6,7 +6,7 @@ channels = ["conda-forge", "bioconda"]
 platforms = ["linux-64"]
 
 [dependencies]
-python = ">=3.10"
+python = ">=3.13.12,<3.14"
 snakemake = ">=8.0"
 snakemake-executor-plugin-slurm = "*"
 samtools = "*"
@@ -16,6 +16,15 @@ pandas = "*"
 pyarrow = "*"
 pysam = "*"
 uv = "*"
+# Quarto website + R dependencies
+quarto = "*"
+r-base = ">=4.3"
+r-tidyverse = "*"
+"r-data.table" = "*"
+"r-r.utils" = "*"
+r-gt = "*"
+r-plotly = "*"
+r-dt = "*"
 # WarpDemuX dependencies
 dtaidistance = "*"
 scikit-learn = "*"
@@ -32,3 +41,5 @@ scripts = ["aa-tRNA-seq-pipeline/scripts/setup-env.sh"]
 setup = { cmd = "cd aa-tRNA-seq-pipeline && bash scripts/setup-tools.sh", description = "One-time setup: install dorado, models, and WarpDemuX" }
 dry-run = { cmd = "snakemake -s Snakefile --configfile=config/config-hotair.yml -n", description = "Dry run HOTAIR workflow" }
 run-slurm = { cmd = "snakemake -s Snakefile --configfile=config/config-hotair.yml --profile=cluster/slurm", description = "Run HOTAIR workflow on SLURM" }
+preprocess-website = { cmd = "Rscript scripts/summarize_pileup.R", description = "Preprocess pileup data for website" }
+render-website = { cmd = "cd website && quarto render", description = "Render Quarto website" }

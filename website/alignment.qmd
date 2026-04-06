@@ -1,0 +1,63 @@
+---
+title: "Alignment Statistics"
+---
+
+```{r}
+#| label: setup
+#| message: false
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(gt)
+library(tidyr)
+
+data_dir <- "../results/hotair/summary/website"
+aln <- read_tsv(file.path(data_dir, "alignment_stats.tsv"), show_col_types = FALSE)
+```
+
+## Reads per Sample
+
+```{r}
+#| label: reads-barplot
+aln |>
+  select(sample, Total = total_reads, Mapped = mapped_reads) |>
+  pivot_longer(-sample, names_to = "type", values_to = "reads") |>
+  ggplot(aes(x = sample, y = reads, fill = type)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = NULL, y = "Reads", fill = NULL, title = "Total vs Mapped Reads") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Mapping Rate
+
+```{r}
+#| label: mapping-rate
+aln |>
+  ggplot(aes(x = reorder(sample, -mapping_rate), y = mapping_rate, fill = sample)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = paste0(round(mapping_rate, 1), "%")), vjust = -0.5) +
+  ylim(0, 100) +
+  labs(x = NULL, y = "Mapping Rate (%)", title = "Mapping Rate by Sample") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Detailed Statistics
+
+```{r}
+#| label: stats-table
+aln |>
+  gt() |>
+  fmt_number(c(total_reads, mapped_reads, primary_mapped), decimals = 0) |>
+  fmt_number(mapping_rate, decimals = 1, pattern = "{x}%") |>
+  cols_label(
+    sample = "Sample",
+    total_reads = "Total Reads",
+    mapped_reads = "Mapped Reads",
+    mapping_rate = "Mapping Rate",
+    primary_mapped = "Primary Mapped"
+  ) |>
+  tab_header(title = "Alignment Statistics")
+```
